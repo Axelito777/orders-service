@@ -7,6 +7,7 @@ import cl.duoc.pedidos360.orders_service.event.OrderKafkaEvent;
 import cl.duoc.pedidos360.orders_service.event.OrderKafkaPublisher;
 import cl.duoc.pedidos360.orders_service.model.Order;
 import cl.duoc.pedidos360.orders_service.repository.OrderRepository;
+import cl.duoc.pedidos360.orders_service.service.FraudStatusClient;
 import cl.duoc.pedidos360.orders_service.support.TokenDePrueba;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,9 @@ class OrderControllerKafkaTest {
 
     @MockitoBean
     private OrderEventPublisher eventPublisher;
+
+    @MockitoBean
+    private FraudStatusClient fraudStatusClient;
 
     @MockitoBean
     private KafkaTemplate<String, OrderKafkaEvent> kafkaTemplate;

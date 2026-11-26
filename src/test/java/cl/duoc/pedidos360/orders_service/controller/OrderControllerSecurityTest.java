@@ -3,6 +3,7 @@ package cl.duoc.pedidos360.orders_service.controller;
 import cl.duoc.pedidos360.orders_service.config.SecurityConfig;
 import cl.duoc.pedidos360.orders_service.support.TokenDePrueba;
 import cl.duoc.pedidos360.orders_service.repository.OrderRepository;
+import cl.duoc.pedidos360.orders_service.service.FraudStatusClient;
 import cl.duoc.pedidos360.orders_service.event.OrderEventPublisher;
 import cl.duoc.pedidos360.orders_service.event.OrderKafkaPublisher;
 import cl.duoc.pedidos360.orders_service.model.Order;
@@ -45,6 +46,9 @@ class OrderControllerSecurityTest {
 
     @MockitoBean
     private OrderEventPublisher eventPublisher;
+
+    @MockitoBean
+    private FraudStatusClient fraudStatusClient;
 
     @MockitoBean
     private OrderKafkaPublisher orderKafkaPublisher;

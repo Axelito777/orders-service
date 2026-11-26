@@ -5,6 +5,7 @@ import cl.duoc.pedidos360.orders_service.dto.CreateOrderRequest;
 import cl.duoc.pedidos360.orders_service.event.*;
 import cl.duoc.pedidos360.orders_service.model.*;
 import cl.duoc.pedidos360.orders_service.repository.OrderRepository;
+import cl.duoc.pedidos360.orders_service.service.FraudStatusClient;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,12 +22,14 @@ public class OrderController {
     private final OrderRepository orderRepository;
     private final OrderEventPublisher eventPublisher;
     private final OrderKafkaPublisher orderKafkaPublisher;
+    private final FraudStatusClient fraudStatusClient;
 
     public OrderController(OrderRepository orderRepository, OrderEventPublisher eventPublisher,
-                           OrderKafkaPublisher orderKafkaPublisher) {
+                           OrderKafkaPublisher orderKafkaPublisher, FraudStatusClient fraudStatusClient) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
         this.orderKafkaPublisher = orderKafkaPublisher;
+        this.fraudStatusClient = fraudStatusClient;
     }
 
     @PostMapping
@@ -35,6 +38,9 @@ public class OrderController {
 
         String usuarioId = extraerClaim(authHeader, "oid");
         String email = extraerClaim(authHeader, "preferred_username");
+
+        // Usuario bloqueado por el antifraude de ms-pago -> 423 (si ms-pago no responde, fail-open)
+        fraudStatusClient.verificarNoBloqueado(usuarioId, authHeader);
 
         List<OrderItem> items = request.getItems().stream()
                 .map(i -> OrderItem.builder()

@@ -12,6 +12,15 @@ Mensaje en `order-events` (`fecha` es `LocalDateTime` sin zona, el mismo reloj q
   "estado": "CREATED", "items": [ { "productId": 1, "productName": "Casio G-Shock", "quantity": 2, "unitPrice": 99990.0 } ] }
 ```
 
+## Bloqueo antifraude
+Antes de crear el pedido consulta a ms-pago `GET /payments/fraud-status/{oid}` reenviando el JWT del usuario.
+Si está bloqueado responde **423** y no guarda ni publica nada:
+```json
+{ "error": "USER_BLOCKED", "until": "2026-11-26T16:40:00Z", "message": "Tu cuenta está bloqueada temporalmente por actividad sospechosa" }
+```
+**Fail-open:** si ms-pago no responde, da error o rechaza el token, el pedido se crea igual y se loguea una
+advertencia (para llegar aquí el usuario ya pagó en ms-pago; rechazar dejaría cobros sin pedido).
+
 ## Endpoints
 | Método | Ruta | Descripción |
 |---|---|---|
@@ -45,6 +54,8 @@ El servicio valida el token por su cuenta, además del API Gateway (`config/Secu
 | `AZURE_CLIENT_ID` | client ID de la API | Audiencia válida del token |
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Brokers de Kafka (EC2 de Kafka) |
 | `KAFKA_MAX_BLOCK_MS` | `1500` | Máximo que se espera a Kafka al publicar |
+| `MS_PAGO_URL` | `http://localhost:8087` | ms-pago (antifraude). **En la EC2: `http://ms-pago:8087`** (mismo docker-compose) |
+| `MS_PAGO_TIMEOUT_MS` | `1500` | Espera máxima a ms-pago; si se supera, fail-open |
 | `SPRING_PROFILES_ACTIVE` | — | `prod` en EC2 |
 
 Copia `.env.example` a `.env` y complétalo.
