@@ -20,10 +20,13 @@ public class OrderController {
 
     private final OrderRepository orderRepository;
     private final OrderEventPublisher eventPublisher;
+    private final OrderKafkaPublisher orderKafkaPublisher;
 
-    public OrderController(OrderRepository orderRepository, OrderEventPublisher eventPublisher) {
+    public OrderController(OrderRepository orderRepository, OrderEventPublisher eventPublisher,
+                           OrderKafkaPublisher orderKafkaPublisher) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
+        this.orderKafkaPublisher = orderKafkaPublisher;
     }
 
     @PostMapping
@@ -67,6 +70,9 @@ public class OrderController {
                                 .build())
                         .collect(Collectors.toList()))
                 .build());
+
+        // Kafka (order-events) para reportes-service. Si Kafka falla, la compra no falla.
+        orderKafkaPublisher.publicar(saved);
 
         return ResponseEntity.ok(saved);
     }

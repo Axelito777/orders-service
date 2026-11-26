@@ -1,6 +1,16 @@
 # orders-service (puerto 8083)
 
-Pedidos de Pedidos360. Guarda el pedido en H2 y publica `order.created` en RabbitMQ (exchange `orders.direct`).
+Pedidos de Pedidos360. Guarda el pedido en H2 y luego:
+- **RabbitMQ:** publica `order.created` en `orders.direct` (stock) y `orders.topic` (notificaciones). Sin cambios.
+- **Kafka:** publica el pedido en el tópico `order-events` (lo lee reportes-service). Key = `orderId`.
+  Productor con `acks=all`, idempotente y `max.block.ms` corto: **si Kafka falla, solo se loguea y la compra
+  responde igual**.
+
+Mensaje en `order-events` (`fecha` es `LocalDateTime` sin zona, el mismo reloj que usaba reportes-service):
+```json
+{ "orderId": 42, "userId": "<oid>", "total": 199980.0, "fecha": "2026-11-26T15:30:00",
+  "estado": "CREATED", "items": [ { "productId": 1, "productName": "Casio G-Shock", "quantity": 2, "unitPrice": 99990.0 } ] }
+```
 
 ## Endpoints
 | Método | Ruta | Descripción |
@@ -33,7 +43,11 @@ El servicio valida el token por su cuenta, además del API Gateway (`config/Secu
 |---|---|---|
 | `AZURE_TENANT_ID` | tenant del proyecto | Tenant de Entra ID (emisor y JWKS) |
 | `AZURE_CLIENT_ID` | client ID de la API | Audiencia válida del token |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Brokers de Kafka (EC2 de Kafka) |
+| `KAFKA_MAX_BLOCK_MS` | `1500` | Máximo que se espera a Kafka al publicar |
 | `SPRING_PROFILES_ACTIVE` | — | `prod` en EC2 |
+
+Copia `.env.example` a `.env` y complétalo.
 
 ## Cómo probarlo
 ```bash
